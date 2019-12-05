@@ -1,27 +1,26 @@
 import cv2
 import numpy as np
 from utilities import ImagesLoader
-
+import matplotlib.pyplot as plt
 
 class CameraCalibrator(object):
 
     def __init__(self, grid_size, data_folder_src, visualization=False):
 
-        self.cal_data_src = data_folder_src)
+        self.cal_data_src = data_folder_src
         self.grid_size = grid_size
         self.data_loader = ImagesLoader(data_folder_src)
         self.visualization = visualization
         
-        self.offset = 100
-
         # Lists to store img/obj points for all images in the calibration dataset
         self.all_obj_pts = [] # 3D points in real world coordinates
         self.all_img_pts = [] # 2D points on the image (image plane space)
         
-        self.obj_pts = self.computeObjPoint(*grid_size) # Object pts are equals for all images
-                                                   # since the grid is constant
+        self.obj_pts = self.computeObjPoints(*grid_size) # Object pts are equals for all images
+                                                         # since the grid is constant
        
         self.calibration_data = dict()
+        self.is_calibrated = False
 
     def calibrate(self):
         
@@ -30,7 +29,7 @@ class CameraCalibrator(object):
             gray_img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
             # Find Chessboard Corners
-            ret, corners = cv2.findChessboardCorners(gray, self.grid_size, None)
+            ret, corners = cv2.findChessboardCorners(gray_img, self.grid_size, None)
 
             if ret == True: # Check if corners were found
                 self.all_img_pts.append(corners)
@@ -50,6 +49,8 @@ class CameraCalibrator(object):
         # rvecs, tvecs = rotation and translation vectors to identify the pos of the camera in the world
         
         self.calibration_data = {"mtx" : mtx, "dist" : dist}
+        self.is_calibrated = True
+        print("Camera calibration performed")
 
     def computeObjPoints(self, nx, ny):
 
@@ -63,8 +64,13 @@ class CameraCalibrator(object):
 
     def applyCalibration(self, frame):
         
-        calibrated_frame = cv2.undistort(frame,\
-                                         self.calibration_data["mtx"],\
-                                         self.calibration_data["dist"],\
-                                         None,
-                                         self.calibration_data["mtx"])
+        if len(self.calibration_data) > 0:
+            calibrated_frame = cv2.undistort(frame,\
+                                             self.calibration_data["mtx"],\
+                                             self.calibration_data["dist"],\
+                                             None,
+                                             self.calibration_data["mtx"])
+            return calibrated_frame
+        else:
+            print("Error! no calibration data found...")
+ 

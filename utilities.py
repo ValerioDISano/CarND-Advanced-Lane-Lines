@@ -14,7 +14,7 @@ class DataLoader(object):
     def getFileList(self):
         return file_list
 
-class ImagesLoader(LoadData):
+class ImagesLoader(DataLoader):
 
     def __init__(self, folder_path):
         super(ImagesLoader, self).__init__(folder_path)
