@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import os
 import sys
+import numpy as np
+import cv2
 
 class DataLoader(object):
 
@@ -46,3 +48,30 @@ class ImagesLoader(DataLoader):
     def dataIterable(self):
         for _ in range(self.n_file):
             yield self.getNextImg()
+
+
+
+
+class Visualizer(object):
+
+    def __init__(self, img):
+        self.img = img
+    
+    @staticmethod
+    def polygonOverlap(img, vertices, color=(255,0,0)):
+        
+        pts = vertices.reshape((-1,1,2)).astype(np.int32)
+        poly_img = np.copy(img)
+        cv2.polylines(poly_img,[pts], False, color)
+        
+        dst = cv2.addWeighted(img, 0.5, poly_img, 0.5, 0.0)
+
+        return Visualizer.show(dst)
+    
+    @staticmethod
+    def show(img):
+        plt.figure()
+        plt.imshow(img)
+        plt.show()
+
+        return True

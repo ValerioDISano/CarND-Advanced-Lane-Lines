@@ -3,6 +3,7 @@
 from utilities import ImagesLoader
 from CameraCalibration import CameraCalibrator
 from Thresholder import Thresholding
+from Perspective import PerspectiveTransformer
 
 import matplotlib.pyplot as plt
 
@@ -24,6 +25,7 @@ def main():
     print(calibrator.calibration_data)
     
     thresholder = Thresholding()
+    transformer = PerspectiveTransformer()
 
     for img in test_loader.dataIterable():
         cal_img = calibrator.applyCalibration(img)
@@ -33,9 +35,10 @@ def main():
         thresholder.applyThresholding(cal_img,'s channel',(180,255))
     
         binary = thresholder.combine()
+        transformed_binary = transformer.applyTransformation(binary)
 
         plt.figure()
-        plt.imshow(binary)
+        plt.imshow(transformed_binary)
         plt.show()
 
 
