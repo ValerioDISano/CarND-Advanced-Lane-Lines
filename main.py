@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
 from utilities import ImagesLoader
+from utilities import Visualizer
 from CameraCalibration import CameraCalibrator
 from Thresholder import Thresholding
 from Perspective import PerspectiveTransformer
-
-import matplotlib.pyplot as plt
 
 def main():
 
@@ -23,24 +22,27 @@ def main():
     calibrator.calibrate()
 
     print(calibrator.calibration_data)
+    print("Pio Ovest\n")
     
     thresholder = Thresholding()
     transformer = PerspectiveTransformer()
 
     for img in test_loader.dataIterable():
+
+        Visualizer.show(img)
+
         cal_img = calibrator.applyCalibration(img)
         
-        thresholder.applyThresholding(cal_img,'gradient mag',(50,255))
+        
+        thresholder.applyThresholding(cal_img,'gradient mag',(40,255))
         thresholder.applyThresholding(cal_img,'gradient dir',(0.7,1.3))
-        thresholder.applyThresholding(cal_img,'s channel',(180,255))
+        thresholder.applyThresholding(cal_img,'s channel',(90,255))
     
         binary = thresholder.combine()
         transformed_binary = transformer.applyTransformation(binary)
-
-        plt.figure()
-        plt.imshow(transformed_binary)
-        plt.show()
-
+        
+        Visualizer.show(transformed_binary)
+        
 
     return
 

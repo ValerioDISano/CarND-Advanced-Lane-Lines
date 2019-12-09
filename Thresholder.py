@@ -12,6 +12,8 @@ class Thresholding(object):
         self.current_img = None
         self.current_gradient = []
         self._image_shape = None
+        
+        self.sobel_kernel = 15
 
     def _threshold(self, img, interval):
 
@@ -49,8 +51,8 @@ class Thresholding(object):
     
     def _getGradient(self,img, output_selector):
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
-        sobel_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
+        sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=self.sobel_kernel)
+        sobel_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=self.sobel_kernel)
         
         output = []
         output_selection = ['mag','deg'] if output_selector == 'both' else [output_selector]
