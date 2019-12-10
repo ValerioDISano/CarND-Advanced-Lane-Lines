@@ -75,3 +75,10 @@ class Visualizer(object):
         plt.show()
 
         return True
+
+
+def getNonZero(img):
+    nonzero_pixels = img.nonzero()
+    print(nonzero_pixels)
+    return nonzero_pixels[0], nonzero_pixels[1]
+
