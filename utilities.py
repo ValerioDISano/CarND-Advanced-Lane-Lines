@@ -76,6 +76,10 @@ class Visualizer(object):
 
         return True
 
+def incrementalAverage(avg, x, n):
+
+    return (avg + ((x-avg)/n))
+
 
 def getNonZero(img):
     nonzero_pixels = img.nonzero()

@@ -24,7 +24,46 @@ class SlidingWindow(object):
 
         self.left_window = None
         self.right_window = None
+        
+        self.leftx_pixels = None
+        self.lefty_pixels = None
+        self.rightx_pixels = None
+        self.righty_pixels = None
+    
+    def updateLines(self, left_line, right_line):
 
+        left_line.detected, right_line.detected = [self.left_fitter.isValid(), self.right_fitter.isValid()]
+        
+        left_line.setFit(self.left_fitter.getCurrentFit())
+        right_line.setFit(self.right_fitter.getCurrentFit())
+        
+        left_line.recent_xfitted.append(self.left_fitter.getFittedData()[0])
+        right_line.recent_xfitted.append(self.right_fitter.getFittedData()[0])
+        
+        left_line.ydata = self.left_fitter.getFittedData()[1]
+        right_line.ydata = self.right_fitter.getFittedData()[1]
+
+
+        left_line.allx, right_line.allx = [self.leftx_pixels, self.rightx_pixels]
+        left_line.ally, right_line.ally = [self.righty_pixels, self.righty_pixels]
+        
+        left_line.update()
+        right_line.update()
+
+        return
+        
+
+
+    def getCurrentFit(self):
+
+        return self.left_fitter.getCurrentFit(), self.right_fitter.getCurrentFit()
+
+    def resetFitters(self):
+        
+        self.is_initialized = False
+        self.left_fitter.invalidate()
+        self.right_fitter.invalidate()
+    
     def find(self, img):
         
         if not self.is_initialized:
@@ -42,6 +81,10 @@ class SlidingWindow(object):
         self.left_fitter.fillPolyData((0, img.shape[0]))
         self.right_fitter.fillPolyData((0, img.shape[0]))
         
+        self.leftx_pixels = leftx
+        self.lefty_pixels = lefty
+        self.rightx_pixels = rightx
+        self.righty_pixels = righty
         
         out_img = np.zeros((img.shape[0], img.shape[1], 3)) * 255
         out_img[lefty, leftx] = [255, 0, 0]
@@ -79,7 +122,6 @@ class SlidingWindow(object):
                     nonzero_x,\
                     nonzero_y\
                     ).nonzero()[0]
-            print("LEFT LANE INDS: {}".format(left_lane_inds))
             right_lane_inds= self.right_window.getIndsInWindow(\
                     nonzero_x,\
                     nonzero_y\
@@ -87,13 +129,15 @@ class SlidingWindow(object):
 
             all_left_lane_inds.append(left_lane_inds)
             all_right_lane_inds.append(right_lane_inds)
-            print(all_left_lane_inds) 
+            
+            leftx_current = None
+            rightx_current = None
+            
             if len(left_lane_inds) > self.min_pix_number:
-                print("IDX")
                 leftx_current = np.int(np.mean(nonzero_x[left_lane_inds]))
             if len(right_lane_inds) > self.min_pix_number:
                 rightx_current = np.int(np.mean(nonzero_x[right_lane_inds]))
-
+            
             self.left_window.positionStep(leftx_current)
             self.right_window.positionStep(rightx_current)
 
@@ -151,17 +195,14 @@ class Window(object):
         self.sum = (lambda x, y : x-y)\
                         if progress == 'decreasing'\
                         else (lambda x, y : x+y)
-        self.opposite_sum =  (lambda x, y : x-y)\
+        self.opposite_sum =  (lambda x, y : x+y)\
                         if progress == 'decreasing'\
-                        else (lambda x, y : x+y)
+                        else (lambda x, y : x-y)
         
         self.y1 = self.opposite_sum(y0, self.h//2)
 
-        print("y0: {} y1: {}".format(y0,self.y1))
         self.y2 = self.sum(self.y1, self.h)
         self.x2 = self.x1 + self.w
-
-        print("Window: x1: {} x2: {} y1: {} y2: {} ".format(self.x1, self.x2, self.y1, self.y2))
 
     def showOnImage(self, img, color=255, width=2):
 
@@ -174,7 +215,8 @@ class Window(object):
     def positionStep(self, x0):
         
         self.moveVertically()
-        self.updateCenterX(x0)
+        if x0 is not None:
+             self.updateCenterX(x0)
 
     def moveVertically(self):
         
@@ -187,13 +229,8 @@ class Window(object):
 
     def getIndsInWindow(self, inds_x, inds_y):
         
-        print(self.y1)
-        print(self.y2)
         inds = ((inds_y >= self.y2) &\
                 (inds_y < self.y1) &\
                 (inds_x >= self.x1) &\
                 (inds_x < self.x2))
-        print(inds_x)
-        print(inds_y)
-        print(inds)
         return inds

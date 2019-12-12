@@ -26,8 +26,6 @@ class PerspectiveTransformer(object):
         self._setDestPoints(img)
         
         if self.is_src_changed:
-            print(self.src)
-            print(self.dst)
             self.M = cv2.getPerspectiveTransform(self.src, self.dst)
             self.is_src_changed = False
         
@@ -37,6 +35,12 @@ class PerspectiveTransformer(object):
         warped_img = cv2.warpPerspective(img, self.M, img.shape[:2][::-1])
 
         return warped_img
+
+    def revertTransformation(self, img):
+
+        unwarped_img = cv2.warpPerspective(img, np.linalg.inv(self.M), img.shape[:2][::-1])
+
+        return unwarped_img
 
     def _setDestPoints(self, img):
         
