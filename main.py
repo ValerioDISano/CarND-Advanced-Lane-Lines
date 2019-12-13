@@ -1,41 +1,57 @@
 #!/usr/bin/env python3
 
 from utilities import ImagesLoader
+from utilities import VideoLoader
 from utilities import Visualizer
 from Line import ImageProcessor
-
+import argparse
+import sys
 
 def main():
 
+    ap = argparse.ArgumentParser(description="Lane detection")
+    ap.add_argument("-d", "--directory", required=True, type=str, help="Data files directory")
+    ap.add_argument("-t", "--file_type", required=True, type=str, help="Choose between videos or images as input")
 
+    args = vars(ap.parse_args())
+    test_path = args["directory"]
+    file_type = args["file_type"]
+
+    print("Selected directory: {}".format(test_path))
+    print("Selected filte type: {}".format(file_type))
+
+    if file_type != "image" and file_type != "video":
+        sys.stderr.write("Error!!! Unrecognized option -t/--file_type option.")
+        print(ap.print_help())
+    
     ### PARAMETERS ###
-    test_imgs_path = "./test_images"
+    
     ### Camera Calibration ###
-    calibration_imgs_path = "./camera_cal"
-    calibration_grid_size = (9,6)
+    #calibration_imgs_path = "./camera_cal"
+    #calibration_grid_size = (9,6)
     ### Thresholding ###
-        
-    test_loader = ImagesLoader(test_imgs_path)
-    
-    """
-    calibrator = CameraCalibrator(calibration_grid_size, calibration_imgs_path, visualization=False)
-    calibrator.calibrate()
+    filter_data = lambda path : path.endswith('project_video.mp4')
 
-    print(calibrator.calibration_data)
+    loader = ImagesLoader(test_path)\
+            if file_type == "image"\
+            else VideoLoader(test_path, predicate=filter_data)
     
-    plt.show()
-    thresholder = Thresholding()
-    transformer = PerspectiveTransformer()
-
-    """
+    
     processor = ImageProcessor()
-    for img in test_loader.dataIterable():
+    frame_processor = lambda frame : processor[frame]
+    
+    loader.processData(frame_processor)
+    loader.writeOutput("video_out.mp4")
 
-        Visualizer.show(img)
 
-        out = processor[img]     
-        Visualizer.show(out)
-        
+    #for img in loader.dataIterable():
+
+        #Visualizer.show(img)
+
+        #out = processor[img]     
+        #Visualizer.show(out)
+        #Visualizer.showContinuosly(out)
+        #Visualizer.write
 
     return
 

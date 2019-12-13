@@ -22,6 +22,9 @@ class SlidingWindow(object):
         self.margin = margin
         self.min_pix_number = min_pix_number
 
+        #self.ym_per_pix = ym_per_pix
+        #self.xm_per_pix = xm_per_pix
+
         self.left_window = None
         self.right_window = None
         
@@ -74,23 +77,32 @@ class SlidingWindow(object):
             leftx, lefty, rightx, righty = self.lanesPixelsDetection(img)
         else:
             leftx, lefty, rightx, righty = self.updateDetection(img)
+        
+        #print("Max lefty: {}".format(np.max(lefty)))
+        #print("Max righty: {}".format(np.max(righty)))
+        
+        out_img = np.zeros((img.shape[0], img.shape[1], 3))
+        
+        if leftx.size and lefty.size and rightx.size and righty.size:
             
-        polx = self.left_fitter.fit(lefty, leftx)
-        poly = self.right_fitter.fit(righty, rightx)
+            ret = True
 
-        self.left_fitter.fillPolyData((0, img.shape[0]))
-        self.right_fitter.fillPolyData((0, img.shape[0]))
-        
-        self.leftx_pixels = leftx
-        self.lefty_pixels = lefty
-        self.rightx_pixels = rightx
-        self.righty_pixels = righty
-        
-        out_img = np.zeros((img.shape[0], img.shape[1], 3)) * 255
-        out_img[lefty, leftx] = [255, 0, 0]
-        out_img[righty, rightx] = [0, 0, 255]
+            polx = self.left_fitter.fit(lefty, leftx)
+            poly = self.right_fitter.fit(righty, rightx)
 
-        return out_img
+            self.left_fitter.fillPolyData((0, img.shape[0]))
+            self.right_fitter.fillPolyData((0, img.shape[0]))
+        
+            self.leftx_pixels = leftx
+            self.lefty_pixels = lefty
+            self.rightx_pixels = rightx
+            self.righty_pixels = righty
+        
+            out_img[lefty, leftx] = [255, 0, 0]
+            out_img[righty, rightx] = [255, 0, 0]
+        else:
+            ret = False
+        return out_img, ret
 
 
     def updateDetection(self, img):
@@ -171,7 +183,7 @@ class SlidingWindow(object):
                 self.margin,\
                 self.window_height)
 
-        self.left_window.showOnImage(img)
+        #self.left_window.showOnImage(img)
     
         
         self.is_initialized = True

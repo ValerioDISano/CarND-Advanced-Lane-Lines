@@ -21,7 +21,7 @@ class PerspectiveTransformer(object):
         self.is_src_changed = True
         self.M = None
 
-    def applyTransformation(self, img, visualization=True):
+    def applyTransformation(self, img, visualization=False):
 
         self._setDestPoints(img)
         

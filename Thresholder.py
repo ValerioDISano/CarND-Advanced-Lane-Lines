@@ -1,3 +1,5 @@
+from utilities import Visualizer
+
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -7,6 +9,7 @@ class Thresholding(object):
     def __init__(self):
         self.thresholded_intensity_imgs = []
         self.thresholded_gradient_imgs = []
+        self.thresholded_sobel_imgs = []
         self.thresh_intervals = {}
         
         self.current_img = None
@@ -35,6 +38,8 @@ class Thresholding(object):
         self.thresh_intervals[method] = interval
         if method == 's channel':
             self.thresholded_intensity_imgs.append(thresholding_fcn(rgb_img))
+        elif "sobel" in method:
+            self.thresholded_sobel_imgs.append(thresholding_fcn(rgb_img))
         else:
             self.thresholded_gradient_imgs.append(thresholding_fcn(rgb_img))
 
@@ -44,16 +49,28 @@ class Thresholding(object):
             return self._gradient_mag_thresholding
         elif method == 'gradient dir':
             return self._gradient_dir_thresholding
+        elif method == 'sobel x':
+            return lambda img : self._Sobel_thresholding(img, 'x')
+        elif method == 'sobel y':
+            return lambda img : self._Sobel_thresholding(img, 'y') 
         elif method == 's channel':
             return lambda img : self._HLS_thresholding(img, 's')
         else:
             raise ValueError(method)
-    
-    def _getGradient(self,img, output_selector):
-        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    def _getSobel(self, img):
+        
+        #gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        gray = img[:,:,0]
+        gray = cv2.GaussianBlur(gray, (3,3), cv2.BORDER_DEFAULT)
+
         sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=self.sobel_kernel)
         sobel_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=self.sobel_kernel)
         
+        return sobel_x, sobel_y
+    def _getGradient(self,img, output_selector):
+        
+        sobel_x, sobel_y = self._getSobel(img)
+
         output = []
         output_selection = ['mag','deg'] if output_selector == 'both' else [output_selector]
 
@@ -76,7 +93,7 @@ class Thresholding(object):
         return output
 
     def _gradient_mag_thresholding(self, img):
-
+        
         mag_grad = self._getGradient(img,'mag')[0]
         interval = self.thresh_intervals['gradient mag']
         
@@ -105,26 +122,55 @@ class Thresholding(object):
             raise ValueError(channel)
 
         img_channel = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)[:,:,c]
-        print("SHAPE {}".format(img_channel.shape))
+        #print("SHAPE {}".format(img_channel.shape))
+        img_channel = cv2.GaussianBlur(img_channel,(3,3),cv2.BORDER_DEFAULT)
         interval = self.thresh_intervals[channel +' channel']
 
         binary = self._threshold(img_channel, interval)
         
         return binary
 
+    def _Sobel_thresholding(self, img, coordinate):
+
+        if coordinate == 'x':
+            c = 0
+        elif coordinate == 'y':
+            c = 1
+        else:
+            raise ValueError(coordinate)
+
+        sobel_img = np.absolute(self._getSobel(img)[c])
+        sobel_img = np.uint8(255*sobel_img/np.max(sobel_img))
+        #print("SHAPE {}".format(img_channel.shape))
+        interval = self.thresh_intervals['sobel ' + coordinate]
+
+        binary = self._threshold(sobel_img, interval)
+
+        
+        return binary
     def combine(self):
 
         combined_binary_intensity_img = np.zeros(self._image_shape) 
         combined_binary_gradient_img = np.zeros(self._image_shape)
+        combined_binary_sobel_img = np.zeros(self._image_shape)
 
+        combined_binary_intensity_img = np.logical_and.reduce(self.thresholded_intensity_imgs)
+        combined_binary_gradient_img = np.logical_and.reduce(self.thresholded_gradient_imgs)
+        combined_binary_sobel_img = np.logical_and.reduce(self.thresholded_sobel_imgs)
+        
+        #Visualizer.show(combined_binary_sobel_img)
+
+        """
         for img in self.thresholded_intensity_imgs:
             combined_binary_intensity_img[(img == 1)] = 1
 
         for img in self.thresholded_gradient_imgs:
             combined_binary_gradient_img[(img == 1)] = 1
         
+        """
         del self.thresholded_intensity_imgs[:]
         del self.thresholded_gradient_imgs[:]
+        del self.thresholded_sobel_imgs[:]
         
         """plt.figure()
         plt.imshow(combined_binary_intensity_img)
@@ -133,7 +179,9 @@ class Thresholding(object):
         plt.imshow(combined_binary_gradient_img)
         plt.show()
         """
-        return np.logical_and(\
-                    combined_binary_intensity_img,\
-                    combined_binary_gradient_img\
+        return np.logical_or.reduce(\
+                    (combined_binary_intensity_img,\
+                    combined_binary_gradient_img,\
+                    combined_binary_sobel_img\
+                    )\
                     ).astype(np.uint8)
