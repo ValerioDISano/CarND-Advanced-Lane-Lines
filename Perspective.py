@@ -11,12 +11,10 @@ class PerspectiveTransformer(object):
         self.offset_percent = offset_percent
         self.img_shape = None
         
-        
-        self.src = np.float32([[588,470],\
-                               [330,655],\
-                               [1030,645],\
-                               [735,470]]) if src_pts is None else src_pts
-        self.src = np.float32([[580, 460],[700, 460],[1040, 680],[260, 680]])
+        #self.src = np.float32([[580, 460],[700, 460],[1040, 680],[260, 680]])\
+        self.src = np.float32([[585, 460],[200, 720],[1120, 720],[695, 460]])\
+                if src_pts is None\
+                else src_pts
 
         self.is_src_changed = True
         self.M = None
@@ -43,21 +41,8 @@ class PerspectiveTransformer(object):
         return unwarped_img
 
     def _setDestPoints(self, img):
-        
-        if (self.img_shape is None) or (img.shape != self.img_shape):
-            self.img_shape = img.shape
-            self.offset = (int(self.img_shape[0]*self.offset_percent),int(self.img_shape[1]*self.offset_percent))
-            """self.dst = np.float32([[self.offset[0], self.offset[1]],\
-                                  [self.img_shape[0]-self.offset[0], self.offset[1]],\
-                                  [self.img_shape[0]-self.offset[0], self.img_shape[1]-self.offset[1]],\
-                                  [self.offset[0], self.img_shape[1]-self.offset[1]]])
-            """
-
-            self.dst = np.float32([[100, 100],\
-                                  [self.img_shape[0]-100, 100],\
-                                  [self.img_shape[0]-100, self.img_shape[1]-100],\
-                                  [100, self.img_shape[1]-100]])
-            self.dst = np.float32([[260, 0],[1040, 0],[1040, 720],[260, 720]])
+        #self.dst = np.float32([[260, 0],[1040, 0],[1040, 720],[260, 720]])
+        self.dst = np.float32([[320, 0],[320, 720],[960, 720],[960, 0]])
         return
 
     def setSrcPoints(self, pts):

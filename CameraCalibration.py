@@ -1,9 +1,13 @@
 import cv2
 import numpy as np
 from utilities import ImagesLoader
+from utilities import Visualizer
 import matplotlib.pyplot as plt
 
 class CameraCalibrator(object):
+    """
+    Calibration of the camera
+    """
 
     def __init__(self, grid_size, data_folder_src, visualization=False):
 
@@ -63,13 +67,13 @@ class CameraCalibrator(object):
         self.visualization = boolean
 
     def applyCalibration(self, frame):
-        
         if len(self.calibration_data) > 0:
             calibrated_frame = cv2.undistort(frame,\
                                              self.calibration_data["mtx"],\
                                              self.calibration_data["dist"],\
                                              None,
                                              self.calibration_data["mtx"])
+
             return calibrated_frame
         else:
             print("Error! no calibration data found...")

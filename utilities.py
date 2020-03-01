@@ -7,9 +7,19 @@ import sys
 import numpy as np
 import cv2
 
+"""
+    Set of utilities function
+"""
+
+
 class DataLoader(object):
+    """
+    Class to load data
+    """
 
     def __init__(self, folder_path, predicate=None):
+        # folder_path : folder containing data
+        # predicate : function to filter data 
         if predicate is None:
             self.file_list = [os.path.join(folder_path,x) for x in os.listdir(folder_path)]
         else:
@@ -23,9 +33,12 @@ class DataLoader(object):
         return file_list
 
 class ImagesLoader(DataLoader):
-
+    """
+    Class to load and process images 
+    """
     def __init__(self, folder_path, predicate=None):
         super(ImagesLoader, self).__init__(folder_path, predicate)
+        self.data_out = {} 
 
     def getNextImg(self):
         self.current_idx += 1
@@ -56,12 +69,24 @@ class ImagesLoader(DataLoader):
         return
         
     def dataIterable(self):
+        # function to get an iterable for the images
         for _ in range(self.n_file):
             yield self.getNextImg()
+    
+    def processData(self, function):
+        # Process images with function
+        for idx, img in enumerate(self.dataIterable()):
+            self.data_out[os.path.basename(self.file_list[idx])] = function(img)
 
+    def writeOutput(self, path):
+        # save processed images
+        for name, img in self.data_out.items():
+            mpimg.imsave(os.path.join(path,name), img)
 
 class VideoLoader(DataLoader):
-
+    """
+    Class to load videos
+    """
     def __init__(self, folder_path, predicate=None):
         super(VideoLoader, self).__init__(folder_path, predicate)
 
@@ -148,6 +173,5 @@ def incrementalAverage(avg, x, n):
 
 def getNonZero(img):
     nonzero_pixels = img.nonzero()
-    #print(nonzero_pixels)
     return nonzero_pixels[0], nonzero_pixels[1]
 
